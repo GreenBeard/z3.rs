@@ -150,7 +150,7 @@ pub struct Optimize<'ctx> {
 // `FuncDecl::new()` which handles Z3 refcounting properly.
 pub struct FuncDecl<'ctx> {
     ctx: &'ctx Context,
-    z3_func_decl: Z3_func_decl,
+    pub z3_func_decl: Z3_func_decl,
 }
 
 /// Recursive function declaration. Every function has an associated declaration.

@@ -3,7 +3,7 @@ extern crate z3;
 use z3::{
     ast,
     ast::{Array, Ast, AstKind, Bool, Dynamic, Float, Int, Real, BV},
-    Config, Context, DeclKind, FuncDecl, Sort,
+    Config, Context, DeclKind, FuncDecl, Sort, Symbol,
 };
 
 #[test]
@@ -270,12 +270,12 @@ fn test_func_decl_attributes() {
 
     let const_decl = FuncDecl::new(&ctx, "c", &[], &Sort::bool(&ctx));
     assert_eq!(const_decl.kind(), DeclKind::UNINTERPRETED);
-    assert_eq!(const_decl.name(), "c");
+    assert_eq!(const_decl.name(), Symbol::String("c".to_owned()));
     assert_eq!(const_decl.arity(), 0);
 
     let unary_decl = FuncDecl::new(&ctx, "unary", &[&Sort::bool(&ctx)], &Sort::bool(&ctx));
     assert_eq!(unary_decl.kind(), DeclKind::UNINTERPRETED);
-    assert_eq!(unary_decl.name(), "unary");
+    assert_eq!(unary_decl.name(), Symbol::String("unary".to_owned()));
     assert_eq!(unary_decl.arity(), 1);
 
     let binary_decl = FuncDecl::new(
@@ -285,6 +285,6 @@ fn test_func_decl_attributes() {
         &Sort::bool(&ctx),
     );
     assert_eq!(binary_decl.kind(), DeclKind::UNINTERPRETED);
-    assert_eq!(binary_decl.name(), "binary");
+    assert_eq!(binary_decl.name(), Symbol::String("binary".to_owned()));
     assert_eq!(binary_decl.arity(), 2);
 }

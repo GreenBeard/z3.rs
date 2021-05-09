@@ -41,6 +41,10 @@ impl<'ctx> ContextHandle<'ctx> {
             Z3_interrupt(self.ctx.z3_ctx);
         }
     }
+
+    pub unsafe fn get_raw_ctx(&self) -> Z3_context {
+        self.ctx.z3_ctx
+    }
 }
 
 unsafe impl<'ctx> Sync for ContextHandle<'ctx> {}

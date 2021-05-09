@@ -1663,7 +1663,6 @@ impl<'ctx> Datatype<'ctx> {
 /// ```
 /// # use z3::{ast, Config, Context, FuncDecl, Pattern, SatResult, Solver, Sort, Symbol};
 /// # use z3::ast::Ast;
-/// # use z3::ast::Dynamic;
 /// # use std::convert::TryInto;
 /// # let cfg = Config::new();
 /// # let ctx = Context::new(&cfg);
@@ -1775,7 +1774,6 @@ pub fn exists_const<'ctx>(
         )
     })
 }
-
 
 impl IsNotApp {
     pub fn new(kind: AstKind) -> Self {

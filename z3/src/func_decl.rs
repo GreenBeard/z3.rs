@@ -87,20 +87,13 @@ impl<'ctx> FuncDecl<'ctx> {
     }
 
     /// Return the name of this `FuncDecl`.
-    ///
-    /// Strings will return the `Symbol`.  Ints will have a `"k!"` prepended to
-    /// the `Symbol`.
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> Symbol {
         unsafe {
-            let guard = Z3_MUTEX.lock().unwrap();
-            let z3_ctx = self.ctx.z3_ctx;
-            let symbol = Z3_get_decl_name(z3_ctx, self.z3_func_decl);
-            match Z3_get_symbol_kind(z3_ctx, symbol) {
-                SymbolKind::String => CStr::from_ptr(Z3_get_symbol_string(z3_ctx, symbol))
-                    .to_string_lossy()
-                    .into_owned(),
-                SymbolKind::Int => format!("k!{}", Z3_get_symbol_int(z3_ctx, symbol)),
-            }
+            let symbol: Z3_symbol = {
+                let guard = Z3_MUTEX.lock().unwrap();
+                Z3_get_decl_name(self.ctx.z3_ctx, self.z3_func_decl)
+            };
+            Symbol::from_z3_symbol(self.ctx, symbol)
         }
     }
 }

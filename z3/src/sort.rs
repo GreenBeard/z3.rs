@@ -265,6 +265,21 @@ impl<'ctx> Sort<'ctx> {
             None
         }
     }
+
+    /// Return the name of this `Sort`.
+    pub fn name(&self) -> Symbol {
+        unsafe {
+            let symbol: Z3_symbol = {
+                let guard = Z3_MUTEX.lock().unwrap();
+                Z3_get_sort_name(self.ctx.z3_ctx, self.z3_sort)
+            };
+            Symbol::from_z3_symbol(self.ctx, symbol)
+        }
+    }
+
+    pub unsafe fn get_raw_sort(&self) -> Z3_sort {
+        self.z3_sort
+    }
 }
 
 impl<'ctx> Clone for Sort<'ctx> {

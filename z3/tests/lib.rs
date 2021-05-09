@@ -1423,3 +1423,104 @@ fn test_ast_safe_decl() {
         "ast node is not a function application, has kind Quantifier"
     );
 }
+
+#[test]
+fn test_const_decl() {
+  let cfg = Config::default();
+  let ctx = Context::new(&cfg);
+
+  let num_a: ast::Int = ast::Int::new_const(&ctx, "a");
+  let num_b: ast::Int = ast::Int::from_u64(&ctx, 2);
+
+  let solver: Solver = Solver::new(&ctx);
+  solver.assert(&num_a._eq(&num_b));
+  assert!(solver.check() == SatResult::Sat);
+
+  let model: Model = solver.get_model().unwrap();
+  assert!(model.const_count() == 1);
+  assert!(model.func_count() == 0);
+  assert!(model.sort_count() == 0);
+  assert!(model.const_decls().len() == 1);
+  assert!(model.func_decls().len() == 0);
+  assert!(model.sorts().len() == 0);
+  let num_a_model_func: FuncDecl = model.const_decl(0).unwrap();
+  assert!(num_a_model_func.name() == Symbol::String("a".to_owned()));
+  assert!(num_a_model_func.arity() == 0);
+
+  let num_a_model: ast::Int = ast::Dynamic::new(&ctx, unsafe {
+    //let guard = Z3_MUTEX.lock().unwrap();
+    z3_sys::Z3_model_get_const_interp(
+      ctx.get_raw_ctx(),
+      model.get_raw_model(),
+      num_a_model_func.z3_func_decl,
+    )
+  }).as_int().unwrap();
+
+  assert!(num_a_model.as_u64().unwrap() == 2);
+}
+
+#[test]
+fn test_sort() {
+  let cfg = Config::default();
+  let ctx = Context::new(&cfg);
+
+  let sort_a: Sort = Sort::uninterpreted(&ctx, Symbol::String("sorta".to_owned()));
+  let sort_b: Sort = Sort::uninterpreted(&ctx, Symbol::String("sortb".to_owned()));
+  let dynamic_a1: ast::Dynamic = unsafe {
+    ast::Dynamic::new(&ctx, z3_sys::Z3_mk_const(
+      ctx.get_raw_ctx(),
+      Symbol::String("a1".to_owned()).as_z3_symbol(&ctx),
+      sort_a.get_raw_sort(),
+    ))
+  };
+  let dynamic_a2: ast::Dynamic = unsafe {
+    ast::Dynamic::new(&ctx, z3_sys::Z3_mk_const(
+      ctx.get_raw_ctx(),
+      Symbol::String("a2".to_owned()).as_z3_symbol(&ctx),
+      sort_a.get_raw_sort(),
+    ))
+  };
+  let dynamic_b1: ast::Dynamic = unsafe {
+    ast::Dynamic::new(&ctx, z3_sys::Z3_mk_const(
+      ctx.get_raw_ctx(),
+      Symbol::String("b1".to_owned()).as_z3_symbol(&ctx),
+      sort_b.get_raw_sort(),
+    ))
+  };
+  let dynamic_b2: ast::Dynamic = unsafe {
+    ast::Dynamic::new(&ctx, z3_sys::Z3_mk_const(
+      ctx.get_raw_ctx(),
+      Symbol::String("b2".to_owned()).as_z3_symbol(&ctx),
+      sort_b.get_raw_sort(),
+    ))
+  };
+
+  let solver: Solver = Solver::new(&ctx);
+  solver.assert(&dynamic_a1._eq(&dynamic_a2).not());
+  solver.assert(&dynamic_b1._eq(&dynamic_b2).not());
+  assert!(solver.check() == SatResult::Sat);
+
+  let model: Model = solver.get_model().unwrap();
+  print!("{}\n", model);
+  print!("sort count {}\n", model.sort_count());
+  assert!(model.const_count() == 4);
+  assert!(model.func_count() == 0);
+  assert!(model.sort_count() == 2);
+  assert!(model.const_decls().len() == 4);
+  assert!(model.func_decls().len() == 0);
+  assert!(model.sorts().len() == 2);
+
+  let mut found_sorta: bool = false;
+  let mut found_sortb: bool = false;
+  for sort in model.sorts().iter() {
+    if let Symbol::String(name) = sort.name() {
+        if name == "sorta" {
+            found_sorta = true;
+        } else if name == "sortb" {
+            found_sortb = true;
+        }
+    }
+  }
+
+  assert!(found_sorta && found_sortb);
+}
