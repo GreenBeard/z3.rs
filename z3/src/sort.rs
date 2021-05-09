@@ -22,6 +22,14 @@ impl<'ctx> Sort<'ctx> {
         })
     }
 
+    pub unsafe fn from_raw(ctx: &'ctx Context, z3_sort: Z3_sort) -> Sort<'ctx> {
+        let guard = Z3_MUTEX.lock().unwrap();
+
+        Z3_inc_ref(ctx.z3_ctx, Z3_sort_to_ast(ctx.z3_ctx, z3_sort));
+
+        Self { ctx, z3_sort }
+    }
+
     pub fn bool(ctx: &Context) -> Sort {
         Sort::new(ctx, unsafe { Z3_mk_bool_sort(ctx.z3_ctx) })
     }

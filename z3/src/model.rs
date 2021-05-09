@@ -1,11 +1,14 @@
 use ast::Ast;
+use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt;
 use z3_sys::*;
 use Context;
+use FuncDecl;
 use Model;
 use Optimize;
 use Solver;
+use Sort;
 use Z3_MUTEX;
 
 impl<'ctx> Model<'ctx> {
@@ -74,6 +77,165 @@ impl<'ctx> Model<'ctx> {
         } else {
             None
         }
+    }
+
+    pub fn const_count(&self) -> usize {
+        unsafe {
+            usize::try_from(Z3_model_get_num_consts(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            )).unwrap()
+        }
+    }
+
+    pub fn func_count(&self) -> usize {
+        unsafe {
+            usize::try_from(Z3_model_get_num_funcs(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            )).unwrap()
+        }
+    }
+
+    pub fn sort_count(&self) -> usize {
+        unsafe {
+            usize::try_from(Z3_model_get_num_sorts(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            )).unwrap()
+        }
+    }
+
+    pub fn has_interpretation(&self, func_decl: &FuncDecl) -> bool {
+        unsafe {
+            Z3_model_has_interp(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+                func_decl.z3_func_decl,
+            )
+        }
+    }
+
+    pub fn const_decl(&self, index: usize) -> Option<FuncDecl> {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            if index < self.const_count() {
+                let func_decl: Z3_func_decl = Z3_model_get_const_decl(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    std::os::raw::c_uint::try_from(index).unwrap(),
+                );
+                Some(FuncDecl::from_raw(
+                    self.ctx,
+                    func_decl,
+                ))
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn func_decl(&self, index: usize) -> Option<FuncDecl> {
+        unsafe {
+            if index < self.func_count() {
+                let func_decl: Z3_func_decl = Z3_model_get_func_decl(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    std::os::raw::c_uint::try_from(index).unwrap(),
+                );
+                Some(FuncDecl::from_raw(
+                    self.ctx,
+                    func_decl,
+                ))
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn sort(&self, index: usize) -> Option<Sort> {
+        unsafe {
+            if index < self.sort_count() {
+                let sort: Z3_sort = Z3_model_get_sort(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    std::os::raw::c_uint::try_from(index).unwrap(),
+                );
+                Some(Sort::from_raw(
+                    self.ctx,
+                    sort,
+                ))
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn const_decls(&self) -> Vec<FuncDecl> {
+        let mut v: Vec<FuncDecl> = Vec::new();
+        unsafe {
+            for i in 0..Z3_model_get_num_consts(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            ) {
+                let func_decl: Z3_func_decl = Z3_model_get_const_decl(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    i,
+                );
+                v.push(FuncDecl::from_raw(
+                    self.ctx,
+                    func_decl,
+                ));
+            }
+        }
+        v
+    }
+
+    pub fn func_decls(&self) -> Vec<FuncDecl> {
+        let mut v: Vec<FuncDecl> = Vec::new();
+        unsafe {
+            for i in 0..Z3_model_get_num_funcs(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            ) {
+                let func_decl: Z3_func_decl = Z3_model_get_func_decl(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    i,
+                );
+                v.push(FuncDecl::from_raw(
+                    self.ctx,
+                    func_decl,
+                ));
+            }
+        }
+        v
+    }
+
+    pub fn sorts(&self) -> Vec<Sort> {
+        let mut v: Vec<Sort> = Vec::new();
+        unsafe {
+            for i in 0..Z3_model_get_num_sorts(
+                self.ctx.z3_ctx,
+                self.z3_mdl,
+            ) {
+                let sort: Z3_sort = Z3_model_get_sort(
+                    self.ctx.z3_ctx,
+                    self.z3_mdl,
+                    i,
+                );
+                v.push(Sort::from_raw(
+                    self.ctx,
+                    sort,
+                ));
+            }
+        }
+        v
+    }
+
+    pub unsafe fn get_raw_model(&self) -> Z3_model {
+        self.z3_mdl
     }
 }
 

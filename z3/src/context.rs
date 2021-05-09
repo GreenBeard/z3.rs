@@ -28,6 +28,10 @@ impl Context {
             ctx: self
         }
     }
+
+    pub unsafe fn get_raw_ctx(&self) -> Z3_context {
+        self.z3_ctx
+    }
 }
 
 impl<'ctx> ContextHandle<'ctx> {
