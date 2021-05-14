@@ -297,6 +297,10 @@ impl<'ctx> Solver<'ctx> {
         let guard = Z3_MUTEX.lock().unwrap();
         unsafe { Z3_solver_set_params(self.ctx.z3_ctx, self.z3_slv, params.z3_params) };
     }
+
+    pub unsafe fn get_raw_solver(&self) -> Z3_solver {
+        self.z3_slv
+    }
 }
 
 impl<'ctx> fmt::Display for Solver<'ctx> {
